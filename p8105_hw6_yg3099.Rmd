@@ -1,0 +1,11 @@
+---
+title: "p8105_hw6_yg3099"
+author: "daisy_gui"
+date: "2025-12-01"
+output: github_document
+---
+
+```{r}
+
+```
+
