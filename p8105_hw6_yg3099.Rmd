@@ -6,6 +6,45 @@ output: github_document
 ---
 
 ```{r}
+library(ggplot2)
+library(tidyverse)
+library(broom)
+library(purrr)
 
+```
+
+## Problem 1
+
+First, data is read from csv file.
+
+```{r}
+homi_raw = read_csv("data/homicide-data.csv")
+```
+
+Then clean the data. 
+
+```{r}
+homi_df =
+  homi_raw %>%
+  mutate(
+    city_state = str_c(city, state, sep = ", "), # city_state variable
+    resolved = as.numeric(disposition == "Closed by arrest"), # resolved variable
+    victim_age = as.numeric(victim_age) # ensure numeric victim age
+  ) %>%
+  
+  # omit cities with missing or incorrect data
+  filter(!(city_state %in% c("Dallas, TX",
+                             "Phoenix, AZ",
+                             "Kansas City, MO",
+                             "Tulsa, AL"))) |> 
+
+  # limit victim race to white or black
+  filter(victim_race %in% c("White", "Black")) |>
+
+  # set baselines
+  mutate(
+    victim_race = fct_relevel(victim_race, "White"),
+    victim_sex = fct_relevel(victim_sex, "Female")
+  )
 ```
 
