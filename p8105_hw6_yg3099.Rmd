@@ -50,3 +50,25 @@ homi_df =
 
 Data is cleaned by creating a city_state variable and a variable on whether the homicide is solved. Cities with missing or incorrect data are omitted. The analysis is limited to white or black victims. And victim_age is changed from character into numeric. 
 
+Now perform logistic regression on predictors of whether cases are resolved in Baltimore.
+
+```{r}
+balti_df =
+  homi_df |> 
+  filter(city_state == "Baltimore, MD")
+
+balti_log =
+  baltimore_df |> 
+  glm(resolved ~ victim_age + victim_sex + victim_race,
+      data = baltimore_df,
+      family = binomial())
+
+balti_log |> 
+  broom::tidy() |> 
+  mutate(OR = exp(estimate),
+         OR_low = exp(conf.low),
+         OR_high = exp(conf.high))
+
+
+```
+
