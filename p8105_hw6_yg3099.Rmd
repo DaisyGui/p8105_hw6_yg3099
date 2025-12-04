@@ -157,7 +157,7 @@ weather_clean =
 
 Observations with NA are omitted and only reponse and predictors are kept as variables. 
 
-Define bootstrapping dunction. 
+Define bootstrapping function. 
 
 ```{r}
 boot_func = function(df) {
@@ -288,7 +288,9 @@ bw_df |>
   arrange(desc(n_missing))
 ```
 
-The regression model on birthweight I would propose would be a linear model includes infant sex, head circumference, length, gestational age, maternal pre-pregnancy BMI, pregnancy weight gain, and the number of cigarettes smoked per day.
+The regression model on birth weight I would propose would be a linear model includes infant sex, head circumference, length, gestational age, maternal pre-pregnancy BMI, pregnancy weight gain, and the number of cigarettes smoked per day.
+
+Based on my biological knowledge, I identified variables known to be related to birth weight and proposed a linear model.
 
 ```{r}
 lm_prop = 
