@@ -11,6 +11,7 @@ library(tidyverse)
 library(broom)
 library(purrr)
 library(p8105.datasets)
+library(modelr)
 ```
 
 ## Problem 1
@@ -25,12 +26,12 @@ Then clean the data.
 
 ```{r}
 homi_df =
-  homi_raw %>%
+  homi_raw |>
   mutate(
     city_state = str_c(city, state, sep = ", "), # city_state variable
     resolved = as.numeric(disposition == "Closed by arrest"), # resolved variable
     victim_age = as.numeric(victim_age) # ensure numeric victim age
-  ) %>%
+  ) |>
   
   # omit cities with missing or incorrect data
   filter(!(city_state %in% c("Dallas, TX",
@@ -254,3 +255,37 @@ ci_results
 Using the 2.5% and 97.5% empirical quantiles of the bootstrap samples, the 95% confidence interval for $\hat{r}^2$ is approximately (-0.00821, -0.00377).
 
 The 95% confidence interval for $\hat{\beta}_1\hat{\beta}_2$is approximately (0.934, 0.947).
+
+
+## Problem 3
+
+First,set seed, load and clean data. 
+
+```{r}
+set.seed(1)
+bw_raw = read_csv("data/birthweight.csv")
+```
+
+Clean data for regression. 
+
+```{r}
+# turn sex, race, malform in to factors
+bw_df = 
+  bw_raw |> 
+  mutate(
+    babysex = factor(babysex, levels = c(1, 2), labels = c("male", "female")),
+    frace   = factor(frace),
+    mrace   = factor(mrace),
+    malform = factor(malform, levels = c(0, 1), labels = c("absent", "present"))
+  )
+
+# clean for missing data
+bw_df |> 
+  summarize(across(everything(), ~sum(is.na(.)))) |> 
+  pivot_longer(everything(),
+               names_to = "variable",
+               values_to = "n_missing") |> 
+  arrange(desc(n_missing))
+```
+
+The regression model I would propose would be 
