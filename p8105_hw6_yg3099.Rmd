@@ -53,22 +53,35 @@ Data is cleaned by creating a city_state variable and a variable on whether the 
 Now perform logistic regression on predictors of whether cases are resolved in Baltimore.
 
 ```{r}
+# select Baltimore city
 balti_df =
   homi_df |> 
-  filter(city_state == "Baltimore, MD")
+  filter(city_state == "Baltimore, MD") # select Baltimore city
 
+# logistic regression
 balti_log =
-  baltimore_df |> 
+  balti_df |> 
   glm(resolved ~ victim_age + victim_sex + victim_race,
-      data = baltimore_df,
+      data = _,
       family = binomial())
 
-balti_log |> 
-  broom::tidy() |> 
+# tidy logistic regression result and calculate OR
+tidy_balti = 
+  balti_log |> 
+  broom::tidy(conf.int = TRUE) |> 
   mutate(OR = exp(estimate),
          OR_low = exp(conf.low),
          OR_high = exp(conf.high))
 
-
+balti_sex = 
+  tidy_balti |>
+  filter(term == "victim_sexMale") |> 
+  select(term, OR, OR_low, OR_high)
 ```
+
+The adjusted odds ratio comparing male victims to female victims is 0.426 with 95% CI: 0.324,0.558, when holding age and race constant.
+
+After adjusting for victim age and race, male homicide cases have 0.43 times the odds of being solved compared to female cases.
+
+Since the 95% confidence interval of odd ratio does not include 1, it is statistically significant that homicide cases in Baltimore involving male victims have lower odds of being solved compared to cases involving female victims.
 
