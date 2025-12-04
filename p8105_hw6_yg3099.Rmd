@@ -10,7 +10,7 @@ library(ggplot2)
 library(tidyverse)
 library(broom)
 library(purrr)
-
+library(p8105.datasets)
 ```
 
 ## Problem 1
@@ -138,3 +138,43 @@ cities_OR |>
 Across the 50 cities, most adjusted odds ratios lie below 1 and confidence intervals do not cross 1, indicating that homicide cases involving male victims are generally less likely to be solved than those involving female victims after adjusting for age and race.
 
 A few cities show ORs above 1, but their confidence intervals are wide, with lower bound of CI lower than 1, reflecting limited sample sizes or significance.
+
+## Problem 2 
+
+Import and clean data from package and set seed. 
+
+```{r}
+set.seed(1)
+
+data("weather_df")
+
+weather_clean = 
+  weather_df |> 
+  select(tmax, tmin, prcp) |> 
+  drop_na()
+```
+
+Observations with NA are omitted and only reponse and predictors are kept as variables. 
+
+Define bootstrapping dunction. 
+
+```{r}
+boot_func = function(df) {
+  sample_frac(df, replace = TRUE)
+}
+```
+
+Save 5000 bootstrap samples. 
+
+```{r}
+n_boot = 5000
+
+boot_straps = 
+  tibble(strap_number = 1:n_boot) |>
+  mutate(
+    strap_sample = map(strap_number, \(i) boot_func(weather_clean))
+  )
+
+boot_straps
+```
+
