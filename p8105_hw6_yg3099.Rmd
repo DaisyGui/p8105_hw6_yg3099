@@ -288,4 +288,52 @@ bw_df |>
   arrange(desc(n_missing))
 ```
 
-The regression model I would propose would be 
+The regression model on birthweight I would propose would be a linear model includes infant sex, head circumference, length, gestational age, maternal pre-pregnancy BMI, pregnancy weight gain, and the number of cigarettes smoked per day.
+
+```{r}
+lm_prop = 
+  bw_df |> 
+  lm(bwt ~ babysex + bhead + blength + gaweeks +
+           ppbmi + wtgain + smoken,
+     data = .)
+
+lmprop_tidy = broom::tidy(lm_prop)
+```
+
+Now we can plot the model residuals against fitted values.
+
+```{r}
+bw_diag_df = 
+  bw_df |> 
+  add_predictions(lm_prop) |> 
+  add_residuals(lm_prop)
+
+bw_diag_df |> 
+  ggplot(aes(x = pred, y = resid)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, color = "salmon") +
+  labs(
+    x = "Fitted birthweight (g)",
+    y = "Residuals",
+    title = "Residuals vs Fitted for my birthweight model"
+  )
+```
+
+According to the plot, most residuals are centered around zero with no strong systematic pattern, which suggests that the linearity assumption is reasonably met for the proposed model. 
+
+We can compare my proposed model with the model using length at birth and gestational age as predictors: 
+
+```{r}
+mod_len_ga = 
+  bw_df |> 
+  lm(bwt ~ blength + gaweeks, data = .)
+```
+
+We can also compare it to the model using head circumference, length, sex, and all interactions between these: 
+
+```{r}
+mod_int = 
+  bw_df |> 
+  lm(bwt ~ bhead * blength * babysex, data = .)
+```
+
