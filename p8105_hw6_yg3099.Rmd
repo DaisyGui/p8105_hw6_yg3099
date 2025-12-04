@@ -178,3 +178,79 @@ boot_straps =
 boot_straps
 ```
 
+Linear regression on each bootstrap sample.
+
+```{r}
+bootstrap_results = 
+  boot_straps |>
+  mutate(
+    models = map(
+      strap_sample,
+      \(df) lm(tmax ~ tmin + prcp, data = df)
+    ),
+    glance_out = map(models, broom::glance),
+    tidy_out   = map(models, broom::tidy)
+  ) |>
+  transmute(
+    strap_number,
+    r_sq = map_dbl(glance_out, "r.squared"),
+    beta_prod = map_dbl(
+      tidy_out,
+      \(x) {
+        b1 = x |> filter(term == "tmin") |> pull(estimate)
+        b2 = x |> filter(term == "prcp") |> pull(estimate)
+        b1 * b2
+      }
+    )
+  )
+
+bootstrap_results
+```
+
+Turn results into long table and plot the distribution. 
+
+```{r}
+# turn linear regression results of bootstrap samples into long table
+boot_long = 
+  bootstrap_results |>
+  pivot_longer(
+    cols = c(r_sq, beta_prod),
+    names_to = "quantity",
+    values_to = "estimate"
+  )
+
+# plot distributions
+boot_long |>
+  ggplot(aes(x = estimate)) +
+  geom_density() +
+  facet_grid(~ quantity, scales = "free") +
+  labs(
+    x = "Bootstrap estimate",
+    y = "Density",
+    title = "Bootstrap distributions of beta1 * beta2 and R^2"
+  )
+
+```
+
+The bootstrap distribution of $\beta_1\beta_2$ is approximately unimodal with a slight right skew. Most estimates are between –0.010 and –0.003 and centered near –0.0055. The shape shows moderate variability, but the estimates remain consistently negative across resamples. This shows a stable direction for the combined effect of tmin and prcp.
+
+The bootstrap distribution of $R^2$  is tightly concentrated and nearly symmetric. Estimates lie mostly between 0.93 and 0.95, with a clear peak around 0.94. The narrow spread indicates little bootstrap variability. This shows that the overall model fit is highly stable and that tmin and prcp consistently explain a large proportion of the variability in tmax.
+
+Now the quantiles can also be calculated. 
+
+```{r}
+ci_results = 
+  boot_long |>
+  group_by(quantity) |>
+  summarize(
+    ci_lower = quantile(estimate, 0.025),
+    ci_upper = quantile(estimate, 0.975)
+  )
+
+ci_results
+
+```
+
+Using the 2.5% and 97.5% empirical quantiles of the bootstrap samples, the 95% confidence interval for $\hat{r}^2$ is approximately (-0.00821, -0.00377).
+
+The 95% confidence interval for $\hat{\beta}_1\hat{\beta}_2$is approximately (0.934, 0.947).
