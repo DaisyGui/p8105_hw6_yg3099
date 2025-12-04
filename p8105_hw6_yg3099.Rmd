@@ -334,3 +334,86 @@ mod_int =
   lm(bwt ~ bhead * blength * babysex, data = bw_df)
 ```
 
+Creates repeated train/test splits and converts into list-columns.
+
+```{r}
+cv_df = 
+  crossv_mc(bw_df, 100) |> 
+  mutate(
+    train = map(train, as_tibble),
+    test  = map(test,  as_tibble)
+  )
+
+cv_df
+```
+
+Fit three models on each train.
+
+```{r}
+cv_models = 
+  cv_df |> 
+  mutate(
+    mod_my     = map(train, ~lm(bwt ~ babysex + bhead + blength + gaweeks +
+                                      ppbmi + wtgain + smoken, data = .x)),
+    mod_len_ga = map(train, ~lm(bwt ~ blength + gaweeks, data = .x)),
+    mod_int    = map(train, ~lm(bwt ~ bhead * blength * babysex, data = .x))
+  )
+```
+
+Calculate RSME for each model:
+
+```{r}
+cv_rmse = 
+  cv_models |> 
+  mutate(
+    rmse_my     = map2_dbl(mod_my,     test, ~rmse(model = .x, data = .y)),
+    rmse_len_ga = map2_dbl(mod_len_ga, test, ~rmse(model = .x, data = .y)),
+    rmse_int    = map2_dbl(mod_int,    test, ~rmse(model = .x, data = .y))
+  ) |> 
+  select(rmse_my, rmse_len_ga, rmse_int)
+```
+
+The RMSE distribution can be plotted: 
+
+```{r}
+# convert into long table for plotting
+cv_long = 
+  cv_rmse |> 
+  pivot_longer(
+    everything(),
+    names_to  = "model",
+    values_to = "rmse"
+  ) |> 
+  mutate(
+    model = recode(model,
+                   rmse_my     = "My model",
+                   rmse_len_ga = "Length + GA",
+                   rmse_int    = "Head*Length*Sex (full interactions)")
+  )
+
+# plot distribution
+cv_long |> 
+  ggplot(aes(x = model, y = rmse)) +
+  geom_violin(fill = "steelblue") +
+  geom_boxplot(outlier.alpha = 0.8, outlier.color = "salmon") +
+  labs(
+    x = "Model",
+    y = "RMSE on test set",
+    title = "Cross-validated prediction error for three birthweight models"
+  ) 
+```
+
+Summarize the comparing result of three models: 
+
+```{r}
+cv_summary = 
+  cv_long |> 
+  group_by(model) |> 
+  summarize(
+    mean_rmse = mean(rmse),
+    sd_rmse   = sd(rmse)
+  )
+
+cv_summary
+```
+
