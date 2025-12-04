@@ -292,10 +292,9 @@ The regression model on birthweight I would propose would be a linear model incl
 
 ```{r}
 lm_prop = 
-  bw_df |> 
   lm(bwt ~ babysex + bhead + blength + gaweeks +
            ppbmi + wtgain + smoken,
-     data = .)
+     data = bw_df)
 
 lmprop_tidy = broom::tidy(lm_prop)
 ```
@@ -325,15 +324,13 @@ We can compare my proposed model with the model using length at birth and gestat
 
 ```{r}
 mod_len_ga = 
-  bw_df |> 
-  lm(bwt ~ blength + gaweeks, data = .)
+  lm(bwt ~ blength + gaweeks, data = bw_df)
 ```
 
 We can also compare it to the model using head circumference, length, sex, and all interactions between these: 
 
 ```{r}
 mod_int = 
-  bw_df |> 
-  lm(bwt ~ bhead * blength * babysex, data = .)
+  lm(bwt ~ bhead * blength * babysex, data = bw_df)
 ```
 
