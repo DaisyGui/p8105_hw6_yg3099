@@ -85,3 +85,56 @@ After adjusting for victim age and race, male homicide cases have 0.43 times the
 
 Since the 95% confidence interval of odd ratio does not include 1, it is statistically significant that homicide cases in Baltimore involving male victims have lower odds of being solved compared to cases involving female victims.
 
+Now calculate odd ratio and CIs on all cities. 
+
+```{r}
+# glm on all cities
+cities_log =
+  homi_df |> 
+  nest(city_row = -city_state) |> 
+  mutate(
+    models = map(
+      city_row,
+      \(df) glm(
+        resolved ~ victim_age + victim_sex + victim_race,
+        data = df,
+        family = binomial()
+      )
+    ),
+    results = map(
+      models,
+      \(mod) broom::tidy(mod, conf.int = TRUE)
+    )
+  ) |>
+  select(-city_row, -models) |>
+  unnest(results)
+
+# odd ratio and filter sex
+cities_OR =
+  cities_log |> 
+  filter(term == "victim_sexMale") |> 
+  mutate(
+    OR      = exp(estimate),
+    OR_low  = exp(conf.low),
+    OR_high = exp(conf.high)
+  )
+```
+
+A plot on ORs and CIs of solving homicides comparing male victims to female victims for each city can be created. 
+
+```{r}
+cities_OR |> 
+  ggplot(aes(x = reorder(city_state, OR), y = OR)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = OR_low, ymax = OR_high)) +
+  coord_flip() +
+  labs(
+    x = "Cities",
+    y = "Adjusted Odd Ratio",
+    title = "Odds ratio of solving homicides comparing male vs female victims"
+  ) 
+```
+
+Across the 50 cities, most adjusted odds ratios lie below 1 and confidence intervals do not cross 1, indicating that homicide cases involving male victims are generally less likely to be solved than those involving female victims after adjusting for age and race.
+
+A few cities show ORs above 1, but their confidence intervals are wide, with lower bound of CI lower than 1, reflecting limited sample sizes or significance.
