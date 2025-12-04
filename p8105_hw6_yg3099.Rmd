@@ -403,7 +403,7 @@ cv_long |>
   ) 
 ```
 
-Summarize the comparing result of three models: 
+The violin plot shows the distribution of cross-validated RMSE values for the three birthweight models. The Length + GA model has the highest RMSE values and the widest spread, which means it has poorer and less stable predictive performance. The Head × Length × Sex interaction model has lower RMSEs and a tighter distribution than the former one. 
 
 ```{r}
 cv_summary = 
@@ -417,3 +417,6 @@ cv_summary =
 cv_summary
 ```
 
+The Length + GA model has the largest mean RMSE (332.23) and the highest standard deviation (13.95). The full interaction model has a lower mean RMSE (288.60) and standard deviation (9.22). The model I proposed has the lowest mean RMSE (282.72) and standard deviation (8.51). 
+
+The model I proposed shows the lowest RMSE values overall and relatively small variation. It provides the most accurate and consistent predictions among the three.
